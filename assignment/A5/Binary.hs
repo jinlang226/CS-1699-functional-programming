@@ -92,64 +92,82 @@ binToInt (x:xs) = (scanChar x * 2^(length xs)) + (binToInt xs)
 scanChar c 
     | '0' <= c && c <= '9' = fromEnum c - fromEnum '0'
 
-
-
-
 -- This function returns a value of type Binary (FBinary) according to the given precision and a floating-point value. You only need to support single precision. No worry about double precision.
 -- 1, 8 exponent, 23 mantissa
+-- fromFloat Single 9.6
+-- *Binary> fromFloat Single 0.1234
+-- 00111101111111100101110010010010
+-- *Binary> toFloat it
+-- 0.1234
+
 fromFloat :: Precision -> Float -> Binary
 fromFloat percision n
-    | n < 0 = FBinary Single [One] 
-    | n > 0 = FBinary Single [Zero] 
+    | n < 0 = FBinary Single ([One] ++ after)
+    | n > 0 = FBinary Single ([Zero] ++ after)
+    where after =  biasedExponentBinary n ++ intBinary ++ floatBinary 
+          intBinary = if getIntPartLength n > 0 then (tail $ intPartInBinary n) else []
+          floatBinary = if getIntPartLength n > 0 then (floatPartToBinary n (fitFloatLength n))
+                        else fittedfloatPartToBinary n 0 False
 
-n :: Float
-n = 9.8
+biasedExponentBinary n
+    | len < 8 = replicate (8 - len) Zero ++ result 
+    | otherwise = result
+    where result = charListToBitList $ intToBin (getExponent n + 127)
+          len = length result
 
-getIntPart :: Float -> [Char] 
-getIntPart n = take (length (show $(floor n))) (show n)
+getExponent n 
+    | getIntPartLength n <= 0 = negativeExponent (floatPartToBinary n (fitFloatLength n)) 0
+    | getIntPartLength n > 0  = positiveExponent n
 
-getFloatPart :: Float -> [Char]
-getFloatPart n = drop (length (show $(floor n)) + 1) (show n)
+positiveExponent :: Float -> Int
+positiveExponent n = (length $ intPartInBinary n) - 1
+
+negativeExponent :: [Bit] -> Int -> Int
+negativeExponent (x:xs) len -- len should be zero (for only decimal exists)
+-- try to find 1 from left to right
+    | x == Zero = negativeExponent xs (len+1)
+    | x == One = negate (len+1)
+
+getIntPart n
+    | n >= 0 = floor n
+    | n <  0 = abs $ ceiling n
+
+getFloatPart n = abs n - fromIntegral(getIntPart n)
 
 getFloatLength :: Float -> Int
-getFloatLength n = (length $ show n) - (length (show $(floor n))) - 1
+getFloatLength n = length $ show $ getFloatPart n
 
 getIntPartLength :: Float -> Int
-getIntPartLength n = length(getIntPart n)
+getIntPartLength n = length $ intPartInBinary n 
 
-fitIntPart :: [Char] -> Int -> ([Char], Int)
-fitIntPart (x:xs) len
-    | x == '0' = fitIntPart xs (len - 1)
-    | x == '1' = ((x:xs), len)
+fitFloatLength :: Float -> Int
+fitFloatLength n 
+    | intLength >  0 = 23 - intLength + 1 -- n is getIntPartLength
+    | intLength == 0 = 23
+    where intLength = getIntPartLength n
 
-fitFloatLength n = 23 - snd (fitIntPart n (length n)) -- n is getIntPart
+intPartInBinary :: Float -> [Bit] 
+intPartInBinary n = charListToBitList $ intToBin $ getIntPart n
 
--- floatPartToBinary :: Int -> Int -> [Char]
--- floatPartToBinary n floatLength
---     | floatLength <= 0 = []       
---     | length(show (n*2)) <= (length $ show n) && head(show(n*2)) == '1' = "1_1, " ++ (floatPartToBinary (charListToInt(tail (show (n*2)))) (floatLength-1)) -- 1
---     | length(show (n*2)) <= (length $ show n) && head(show(n*2)) /= '1' = "0_2, " ++ floatPartToBinary (n*2) (floatLength-1) -- 0
---     | (restAreZero n)  && length(show (n*2)) >  (length $ show n) && head(show(n*2)) == '1' = "1_3, "
---     | not (restAreZero n)  && length(show (n*2)) >  (length $ show n) && head(show(n*2)) == '1' = "1_4, " ++ (floatPartToBinary (charListToInt(tail (show (n*2)))) (floatLength-1)) -- 1
---     | length(show (n*2)) >  (length $ show n) && head(show(n*2)) /= '1' = "error"
+floatPartToBinary :: Float -> Int -> [Bit]
+floatPartToBinary n floatLength -- float length: getFloatLength n
+    | floatLength <= 0 = []
+    | getIntPart((getFloatPart n) * 2) == 0 = [Zero] ++ nextIter
+    | getIntPart((getFloatPart n) * 2) == 1 = [One] ++ nextIter
+    where nextIter = floatPartToBinary (getFloatPart((getFloatPart n) * 2)) (floatLength - 1)
 
-floatPartToBinary :: [Char] -> Int -> [Char]
-floatPartToBinary numChar floatLength
-    | floatLength <= 0 = []       
-    | length(show (n*2)) <= (length $ show n) && head(show(n*2)) == '1' = "1_1, " ++ (floatPartToBinary (charListToInt(tail (show (n*2)))) (floatLength-1)) -- 1
-    | length(show (n*2)) <= (length $ show n) && head(show(n*2)) /= '1' = "0_2, " ++ floatPartToBinary (n*2) (floatLength-1) -- 0
-    | (restAreZero n)  && length(show (n*2)) >  (length $ show n) && head(show(n*2)) == '1' = "1_3, "
-    | not (restAreZero n)  && length(show (n*2)) >  (length $ show n) && head(show(n*2)) == '1' = "1_4, " ++ (floatPartToBinary (charListToInt(tail (show (n*2)))) (floatLength-1)) -- 1
-    | length(show (n*2)) >  (length $ show n) && head(show(n*2)) /= '1' = "error"
-    where n = charListToInt numChar
+fittedfloatPartToBinary :: Float -> Int -> Bool -> [Bit]
+fittedfloatPartToBinary n len metFirstOne
+    | len >= 23 = []
+    | getIntPart((getFloatPart n) * 2) == 0 && metFirstOne == True = [Zero] ++ nextIterOne
+    | getIntPart((getFloatPart n) * 2) == 0 && metFirstOne == False = nextIter
+    | getIntPart((getFloatPart n) * 2) == 1 = [One] ++ nextIterOne
+    where nextIter = fittedfloatPartToBinary (getFloatPart((getFloatPart n) * 2)) (len) False 
+          nextIterOne = fittedfloatPartToBinary (getFloatPart((getFloatPart n) * 2)) (len+1) True 
+
 
 charListToInt :: [Char] -> Int
 charListToInt x = read x :: Int
-
-restAreZero :: Int -> Bool
-restAreZero n 
-    | n `mod` 10 == 0 = True
-    | otherwise = False
 
 charListToIntList :: [Char] -> [Int]
 charListToIntList [] = []
@@ -166,18 +184,22 @@ toFloat (FBinary percision bits)
     | otherwise = error "error"
 
 -- test
-n1 = charListToBitList "01000011001100100010000000000000" -- 178.125 v
-n2 = charListToBitList "00111111100000010100011110101110" -- 0.01 v
-n3 = charListToBitList "10111100001000111101011100001010" -- -0.01 v
-n4 = charListToBitList "00111111100000010100011110101110" -- 1.01 v
-n5 = charListToBitList "01000001001000000010100011110110" -- 10.01 v
-n6 = charListToBitList "01000010110010000110010111100011" -- 100.199 v
-n7 = charListToBitList "01000010110010001000000000000000" -- 100.25 v
-n8 = charListToBitList "00111110000000000000000000000000" -- 0.125 v
-n9 = charListToBitList "11000000010010010000111111011010" -- -3.1415925 v
-n10 = charListToBitList "01111111110011001100110011001101" -- NAN
-n11 = charListToBitList "01111111100000000000000000000000" -- inf
-n12 = charListToBitList "11111111100000000000000000000000" -- -inf
+-- -- toFloat(FBinary Single n_)
+-- n1 = charListToBitList "01000011001100100010000000000000" -- 178.125 v
+-- n3 = charListToBitList "10111100001000111101011100001010" -- -0.01 v
+-- n4 = charListToBitList "00111111100000010100011110101110" -- 1.01 v
+-- n5 = charListToBitList "01000001001000000010100011110110" -- 10.01 v
+-- n6 = charListToBitList "01000010110010000110010111100011" -- 100.199 v
+-- n7 = charListToBitList "01000010110010001000000000000000" -- 100.25 v
+-- n8 = charListToBitList "00111110000000000000000000000000" -- 0.125 v
+-- n9 = charListToBitList "11000000010010010000111111011010" -- -3.1415925 v
+-- n10 = charListToBitList "01111111110011001100110011001101" -- NAN
+-- n11 = charListToBitList "01111111100000000000000000000000" -- inf
+-- n12 = charListToBitList "11111111100000000000000000000000" -- -inf
+-- n13 = charListToBitList "00111101100000000000000000000001"
+-- n14 = charListToBitList "00111110000000000010100000000000" -- 0.125152587891
+-- n15 = charListToBitList "00111100001000111101011100001010" -- 0.01 v
+-- n2  = charListToBitList "00111100010100011110101110000101" 
 
 takeExponent :: [Bit] -> Int
 takeExponent n =  binToInt (binListToCharList (tail $ take 9 n)) - 127 -- exponent in int
@@ -186,10 +208,10 @@ takeMantissa :: [a] -> [a]
 takeMantissa n =  drop 9 n
 
 getIntPartFromMantissa :: [Bit] -> [Bit]
-getIntPartFromMantissa n 
+getIntPartFromMantissa n  
     | exponent == 128 = error "this is a NAN"
     | exponent > 0  = [One] ++ take exponent (takeMantissa n) 
-    | exponent < 0  = [One]
+    | exponent < 0  = [Zero]
     | exponent == 0 = [One]
     where exponent = takeExponent n
 
@@ -214,4 +236,5 @@ twoExponentFst n = zipWith (*) ((zipWith (^) (replicate (length n) 2)) (reverse 
 
 toIntList :: [Char] -> [Float]
 toIntList (x:xs) = [fromIntegral (scanChar x)] ++ toIntList xs
+
 
