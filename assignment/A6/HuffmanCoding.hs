@@ -2,7 +2,6 @@
 -- (HuffmanCoding(HBit), toHuffmanCode, fromHuffmanCode) where
 
 import BTree 
-import Text.XHtml (treeColors)
 
 -- This module defines a new data type called HBit which only consists of two value constructors, 
 -- L (for left) and R (for right). 
@@ -25,9 +24,7 @@ instance Show HBit where
 -- a Huffman tree will have type BTree (Char, Int).
 
 -- toHuffmanCode :: [Char] -> ([Char], [Char])
--- getFinalTree input = (calcTree $ getList input)!!0
-
--- fromHuffmanCode :: [Char] -> [Char] -> [Char]
+getFinalTree input = (calcTree $ getList input)!!0
 
 
 -- To construct a Huffman tree for a message, first we need to start with the frequency of each character in the message, 
@@ -42,16 +39,11 @@ freq (x: xs) = ins x (freq xs)
       ins x ((fk, fv): fs) | x >  fk = (fk, fv): ins x fs             
       ins x []                       = (x, 1): []           
 
-
 sortBySnd [] = []
-sortBySnd ((x,a):(y,b):l)
-    | l == []   = if a <= b then (x,a):(y,b):[]  else (y,b):(x,a):[] 
-    | a >= b    = (y,b) : sortBySnd ((x,a):l)
-    | otherwise = (x,a) : sortBySnd ((y,b):l)
+sortBySnd [a] = [a]
+sortBySnd ((x,a):xs) = sortBySnd [(c1, i1) | (c1, i1) <- xs, i1 < a] ++ [(x,a)] ++ sortBySnd [(c2, i2) | (c2, i2) <- xs, i2 >= a]
 
 getList list  = listToListOfTree $ sortBySnd $ freq list
--- [('1',4),('2',2),('3',3)]
-
 
 -- freq list to Tree list 
 listToListOfTree :: [(a, b)] -> [BTree (a, b)]
@@ -77,27 +69,11 @@ makeNewRoot list n = (BTree ('\NUL', n) (list!!0) (list!!1))
 
 dropFirstTwo list = drop 2 list
 
+
+
 -- insert new node to whole list
 -- [BTree ('x',1) EmptyBTree EmptyBTree,BTree ('y',1insertTreeList (BTree ('\NUL',2) (BTree ('d',1) EmptyBTree EmptyBTree) (BTree ('g',1) EmptyBTree EmptyBTree)) ([BTree ('x',1) EmptyBTree EmptyBTree,BTree ('y',1) EmptyBTree EmptyBTree,BTree ('z',1) EmptyBTree EmptyBTree])) EmptyBTree EmptyBTree,BTree ('z',1) EmptyBTree EmptyBTree]
 -- test: insertTreeList (BTree ('\NUL',2) (BTree ('d',1) EmptyBTree EmptyBTree) (BTree ('g',1) EmptyBTree EmptyBTree)) ([BTree ('x',1) EmptyBTree EmptyBTree,BTree ('y',1) EmptyBTree EmptyBTree,BTree ('z',1) EmptyBTree EmptyBTree])
--- insertTreeList EmptyBTree ((BTree (cx, ix) leftBTreex rightBTreex) : xs) = ((BTree (cx, ix) leftBTreex rightBTreex) : xs)
--- insertTreeList (BTree (c, i) leftBTree rightBTree) [] = [(BTree (c, i) leftBTree rightBTree)]
--- insertTreeList (BTree (c, i) leftBTree rightBTree) ((BTree (cx, ix) leftBTreex rightBTreex) : xs) 
---     | i <= ix = (BTree (c, i) leftBTree rightBTree) : ((BTree (cx, ix) leftBTreex rightBTreex) :xs) 
---     | i >  ix = (BTree (cx, ix) leftBTreex rightBTreex) : (insertTreeList (BTree (c, i) leftBTree rightBTree) xs)
-
-
-
--- findRoute nodeValue EmptyBTree res = error "emptyTree"
-findRoute :: Char -> BTree (Char, b) -> [HBit] -> (Char, [HBit])
-findRoute nodeValue (BTree (c, i) leftBTree rightBTree) res
-    | nodeValue == c = (nodeValue, res)
-    | nodeValue <  c =  (nodeValue, (res ++ [L]))
-    | nodeValue >  c =  (nodeValue, (res ++ [R]))
-
-
-
-
 insertTreeList EmptyBTree ((BTree (cx, ix) leftBTreex rightBTreex) : xs) = ((BTree (cx, ix) leftBTreex rightBTreex) : xs)
 insertTreeList (BTree (c, i) leftBTree rightBTree) [] = [(BTree (c, i) leftBTree rightBTree)]
 insertTreeList (BTree (c, i) leftBTree rightBTree) ((BTree (cx, ix) leftBTreex rightBTreex) : xs) 
@@ -111,6 +87,23 @@ calcTree list
 -- list = [BTree ('e',1) EmptyBTree EmptyBTree,BTree ('h',1) EmptyBTree EmptyBTree,BTree ('o',1) EmptyBTree EmptyBTree,BTree ('l',2) EmptyBTree EmptyBTree] 
 
 
+
+treeToList :: BTree (Char, Integer) -> [(Char, [HBit])]
+treeToList (BTree (c, i) leftBTree rightBTree)
+    | rightBTree == EmptyBTree && leftBTree == EmptyBTree = [(c, [])] 
+    | otherwise = map (addHBit L) (treeToList leftBTree) ++ map (addHBit R) (treeToList rightBTree)
+
+addHBit b = \x -> (fst x, b : (snd x))
+
+
+
 -- getCode
+list :: BTree (Char, Integer)
 list = BTree ('\NUL',3) (BTree ('g',1) EmptyBTree EmptyBTree) (BTree ('\NUL',2) (BTree ('d',1) EmptyBTree EmptyBTree) (BTree ('o',1) EmptyBTree EmptyBTree))
+
+
+-- fromHuffmanCode :: [Char] -> [Char] -> [Char]
+
+
+
 
