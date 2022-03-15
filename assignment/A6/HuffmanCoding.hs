@@ -100,18 +100,27 @@ getHBitListHelper input treeList res index2 length2
     | index2 < length2 = if input == (fst $ treeList!!index2) then res ++ snd(treeList!!index2) else getHBitListHelper input treeList res (index2+1) length2 
     | otherwise = res
 
---------------------------------------------
+
+---------------------------
 
 fromHuffmanCode :: [Char] -> [Char] -> [Char]
-fromHuffmanCode t h = findChar tree hbit 0 (length(hbit)) []
+fromHuffmanCode t h = fromHuffmanCodeInternal tree hbits
     where tree = read t :: BTree (Char, Int)
-          hbit = read h :: [HBit]
-          
+          hbits = read h :: [HBit]
 
-findChar (BTree (c, i) leftBTree rightBTree) hbit index len res
-    | index < len && leftBTree == EmptyBTree && rightBTree == EmptyBTree = res++c
-    | index < len && bit == R = findChar rightBTree hbit (index+1) len res
-    | index < len && bit == L = findChar leftBTree hbit (index+1) len res
-    | otherwise = []
-    where bit = hbit!!index
-   
+
+fromHuffmanCodeInternal :: BTree (Char, Int) -> [HBit] -> [Char]
+fromHuffmanCodeInternal _ [] = ""
+fromHuffmanCodeInternal tree hbits =
+    symbol:(fromHuffmanCodeInternal tree hbits')
+    where
+        (symbol, hbits') = consumeSymbol tree hbits
+
+
+consumeSymbol :: BTree (Char, Int) -> [HBit] -> (Char, [HBit])
+consumeSymbol (BTree ('\NUL', _) lTree rTree) (h:hs) =
+    consumeSymbol (if h == L then lTree else rTree) hs
+consumeSymbol (BTree (c, _) _ _) hs = (c, hs)
+
+
+-- fromHuffmanCode "BTree ('\\NUL',3) (BTree ('o',1) EmptyBTree EmptyBTree) (BTree ('\\NUL',2) (BTree ('d',1) EmptyBTree EmptyBTree) (BTree ('g',1) EmptyBTree EmptyBTree))" "[R,L,L,R,R]"
