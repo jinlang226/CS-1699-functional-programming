@@ -1,5 +1,5 @@
--- module HuffmanCoding
--- (HuffmanCoding(HBit), toHuffmanCode, fromHuffmanCode) where
+module HuffmanCoding
+(toHuffmanCode, fromHuffmanCode) where
 
 import BTree 
 
@@ -100,10 +100,18 @@ getHBitListHelper input treeList res index2 length2
     | index2 < length2 = if input == (fst $ treeList!!index2) then res ++ snd(treeList!!index2) else getHBitListHelper input treeList res (index2+1) length2 
     | otherwise = res
 
+--------------------------------------------
 
+fromHuffmanCode :: [Char] -> [Char] -> [Char]
+fromHuffmanCode t h = findChar tree hbit 0 (length(hbit)) []
+    where tree = read t :: BTree (Char, Int)
+          hbit = read h :: [HBit]
+          
 
--- fromHuffmanCode :: [Char] -> [Char] -> [Char]
-
-
-
-
+findChar (BTree (c, i) leftBTree rightBTree) hbit index len res
+    | index < len && leftBTree == EmptyBTree && rightBTree == EmptyBTree = res++c
+    | index < len && bit == R = findChar rightBTree hbit (index+1) len res
+    | index < len && bit == L = findChar leftBTree hbit (index+1) len res
+    | otherwise = []
+    where bit = hbit!!index
+   
