@@ -94,11 +94,18 @@ getHBitList input treeList index res
     where len = length(input)
           char = input!!index
 
--- b = map (\p -> if p == ('b', 0) then ('b', 13) else p) a
 getHBitListHelper :: Char -> [(Char, [HBit])] -> [HBit] -> Int -> Int -> [HBit]
 getHBitListHelper input treeList res index2 length2 
     | index2 < length2 = if input == (fst $ treeList!!index2) then res ++ snd(treeList!!index2) else getHBitListHelper input treeList res (index2+1) length2 
     | otherwise = res
+
+getHBitListNew :: [Char] -> [(Char, [HBit])] -> [HBit]
+getHBitListNew "" _ = []
+getHBitListNew (c:cs) treeList = (getHBit treeList) ++ (getHBitListNew cs treeList)
+    where
+    getHBit ((ch, hbits):treeList')
+        | c == ch = hbits
+        | otherwise = getHBit treeList'
 
 
 ---------------------------
