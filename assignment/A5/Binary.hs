@@ -1,6 +1,6 @@
 module Binary 
 
-(Binary (IBinary, FBinary), fromInt, toInt) where --, toFloat, fromFloat
+(Binary (IBinary, FBinary), fromInt, toInt, toFloat, fromFloat) where 
 import Bit
 
 -- IBinary for integer and FBinary for floating-point
@@ -34,6 +34,7 @@ getBWidth width | width == Byte = 8
 fromInt :: Format -> BWidth -> Int -> Binary
 fromInt format width n | format == Unsigned && n < 0 = error "error: n should not be less than 0 for Unsigned number"
                        | format == Unsigned  = IBinary format width fitted1
+                       | format == Signed && n > 0 = error "error: n should not be greater than 0 for Signed number"
                        | format == Signed = IBinary format width fitted2
                        | otherwise = error "error"
                         where 
@@ -52,6 +53,9 @@ flipBits [Zero] = [One]
 flipBits (x:xs) | last (x:xs) == Zero = (flipBits (init (x:xs))) ++ [One]
                 | last (x:xs) == One = (flipBits (init (x:xs))) ++ [Zero]
 
+flipBitsNew [] = []
+flipBitsNew (One : xs) = Zero : flipBitsNew xs
+flipBitsNew (Zero : xs) = One : flipBitsNew xs
 
 -- intToBin n returns the unsigned binary representation (as a string of 0s and 1s) of the given positive number n. For example, intToBin 22 is "10110". You can assume that the given integer will be greater than or equal to 0.
 intToBin :: Int -> [Char]
@@ -194,8 +198,8 @@ toFloat (FBinary percision bits)
 -- n8 = charListToBitList "00111110000000000000000000000000" -- 0.125 v
 -- n9 = charListToBitList "11000000010010010000111111011010" -- -3.1415925 v
 -- n10 = charListToBitList "01111111110011001100110011001101" -- NAN
--- n11 = charListToBitList "01111111100000000000000000000000" -- inf
--- n12 = charListToBitList "11111111100000000000000000000000" -- -inf
+n11 = charListToBitList "01111111100000000000000000000000" -- inf
+n12 = charListToBitList "11111111100000000000000000000000" -- -inf
 -- n13 = charListToBitList "00111101100000000000000000000001"
 -- n14 = charListToBitList "00111110000000000010100000000000" -- 0.125152587891
 -- n15 = charListToBitList "00111100001000111101011100001010" -- 0.01 v
