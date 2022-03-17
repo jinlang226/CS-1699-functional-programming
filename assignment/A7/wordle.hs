@@ -102,3 +102,4 @@ prompt str = do
     hFlush stdout
     getLine 
 
+---
