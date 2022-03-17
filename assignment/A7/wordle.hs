@@ -9,12 +9,15 @@ main = do
     content <- readFile "sgb-words.txt"
     target <- getTarget (lines content)
     -- let target = "stews"
-    putStrLn target
+    -- putStrLn target
     putStrLn "Welcome to Wordle by Haskell\n============================\n(4) watts\n   *+---\nYou of 4 more tries.\n'w' is in the word and in the correct spot.\n'a' is in the word but in the wrong spot.\n't' and 's' are not in the word"
     playGame target
 
 getTarget :: [String] -> IO String
-getTarget list = randomRIO (0, length list) >>= return . (!!) list
+getTarget list = randomRIO (0, length list -1) >>= return . (!!) list
+-- do
+-- idx <- randomRIO (0, length list)
+-- return $ list!!idx
 
 playGame :: [Char] -> IO ()
 playGame target = do
@@ -41,7 +44,7 @@ playGame target = do
     word <- prompt "(1) "
     if word == target 
         then putStrLn "You Win..." 
-        else putStrLn ("\nYou lose... The word is " ++ "\"" ++ target++ "\"" ++ ".")
+        else putStrLn ((checkTarget word target) ++ "\nYou lose... The word is " ++ "\"" ++ target++ "\"" ++ ".")
     replayGame target
 
 condition :: [Char] -> [Char] -> IO ()
