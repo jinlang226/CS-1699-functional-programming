@@ -101,5 +101,4 @@ prompt str = do
     putStr str
     hFlush stdout
     getLine 
-
----
+    
