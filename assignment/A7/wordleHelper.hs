@@ -14,7 +14,7 @@ main = do
     let resNotContainAt = containAtPosition1 input 0 '+' 5
     let resNotContain = containAtPosition1 input 0 '-' 5 
     let resContainAt = containAtPosition1 input 0 '*' 5 
-    when (input == "0") $ resultZero input resContainAt resNotContain resNotContainAt
+    when (input == "0") $ resultZero input resContainAt resNotContain resNotContainAt list
     printRequirement input resContainAt resNotContain resNotContainAt
     restartHelper resContainAt resNotContain resNotContainAt
 
@@ -29,20 +29,51 @@ restartHelper resContainAt resNotContain resNotContainAt = do
         let newResNotContainAt = containAtPosition input 0 '+' 5 resNotContainAt
         let newResNotContain = containAtPosition input 0 '-' 5 resNotContain 
         if input == "0"
-            then resultZero input resContainAt resNotContain resNotContainAt
+            then resultZero input resContainAt resNotContain resNotContainAt list
             else printRequirement input resContainAt resNotContain resNotContainAt
         restartHelper newResContainAt newResNotContain newResNotContainAt -- recursive step here
 
 
-resultZero input resContainAt resNotContain resNotContainAt = do
-    putStrLn "list result" 
+resultZero input resContainAt resNotContain resNotContainAt list = do
+    let resultList = getFilterContainNotAt resNotContainAt (getFilterNotContain resNotContain (getFilterContainAt resContainAt list))
+    putStrLn (show resultList)
+    putStrLn ("There are " ++ show (length resultList) ++ " words satisfy the following conditions:") 
     printRequirement input resContainAt resNotContain resNotContainAt
     
+-- filter res list 
+-- [('a', 0), ('b', 1)]
+getFilterContainAt [] list = list
+getFilterContainAt (x : xs) list = filterContainAt x (getFilterContainAt xs list) 
+
+getFilterNotContain [] list = list
+getFilterNotContain (x : xs) list = filterNotContain x (getFilterNotContain xs list) 
+
+getFilterContainNotAt :: Eq a => [(a, Int)] -> [[a]] -> [[a]]
+getFilterContainNotAt [] list = list
+getFilterContainNotAt (x : xs) list = filterContainNotAt x (getFilterContainNotAt xs list) 
+
+
+-- do not contain xxx
+filterNotContain _ [] = []
+filterNotContain (wordIndex, index) (x : xs) -- target list
+    | not (myElem wordIndex x) = x : filterNotContain (wordIndex, index) xs
+    | otherwise = filterNotContain (wordIndex, index) xs 
+
+-- contain at position
+filterContainAt (_, _) [] = []
+filterContainAt (wordIndex, index) (x : xs) -- target list
+    | x!!index == wordIndex = x : filterContainAt (wordIndex, index) xs
+    | otherwise = filterContainAt (wordIndex, index) xs 
+
+filterContainNotAt (_, _) [] = []
+filterContainNotAt (wordIndex, index) (x : xs)
+    | x!!index /= wordIndex && myElem wordIndex x = x : filterContainNotAt (wordIndex, index) xs
+    | otherwise = filterContainNotAt (wordIndex, index) xs 
 
 printRequirement input resContainAt resNotContain resNotContainAt = do
-    putStrLn ("There are " ++ show (length resContainAt) ++ " words satisfy the following conditions:") -- 
     putStr " - Do not Contain "
     -- 1. Do not contain eodt
+    
     putStrLn (printDoNotContain resNotContain)
     -- 2. Contain 'i' but not at positions [2]
     putStr (printDoNotContainAtPosition resNotContainAt)
@@ -52,10 +83,8 @@ printRequirement input resContainAt resNotContain resNotContainAt = do
 printDoNotContainAtPosition  [] = []
 printDoNotContainAtPosition ((character, index) : xs) = " - Contain '" ++ [character] ++ "' but not at position [" ++ show index ++ "]\n" ++ printDoNotContainAtPosition xs 
 
-
 printDoNotContain [] = [] 
-printDoNotContain ((character, index) : xs) = character : printDoNotContain xs 
-
+printDoNotContain ((character, index) : xs) = character : printDoNotContain xs
 
 printContainAtPosition [] = [] 
 printContainAtPosition ((character, index) : xs) = " - Contain '" ++ [character] ++ "' at position " ++ show index ++ "\n" ++ printContainAtPosition xs 
@@ -85,23 +114,6 @@ containAtPosition input index operation len x
           word = getWord input
           hintIndex = hint!!index
           wordIndex = word!!index
-
--- do not contain xxx
-filterNotContain (_, _) [] = []
-filterNotContain (wordIndex, index) (x : xs) -- target list
-    | x!!index /= wordIndex = x : filterNotContain (wordIndex, index) xs
-    | otherwise = filterNotContain (wordIndex, index) xs 
-
--- contain at position
-filterContainAt (_, _) [] = []
-filterContainAt (wordIndex, index) (x : xs) -- target list
-    | x!!index == wordIndex = x : filterContainAt (wordIndex, index) xs
-    | otherwise = filterContainAt (wordIndex, index) xs 
-
-filterContainNotAt (_, _) [] = []
-filterContainNotAt (wordIndex, index) (x : xs)
-    | x!!index /= wordIndex && myElem wordIndex x = x : filterContainNotAt (wordIndex, index) xs
-    | otherwise = filterContainNotAt (wordIndex, index) xs 
 
 -- usage splitByIndices "abcde12345"  [5]
 splitByIndices :: [Char] -> [Int] -> [[Char]]
