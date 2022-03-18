@@ -7,38 +7,43 @@ import Control.Monad
 -- containAtPosition "aexxx**--*" 0 '*' 5 [('a', 0), ('e', 1)]
 
 main = do
-    putStrLn ("There are "++ show 5757 ++ " words satisfy the following conditions: ")
     content <- readFile "sgb-words.txt"
     let list = lines content
+    putStrLn ("There are "++ show 5757 ++ " words satisfy the following conditions: ")
     input <- prompt "Enter a word and hints (0 to show remaining words): "
     let resNotContainAt = containAtPosition1 input 0 '+' 5
     let resNotContain = containAtPosition1 input 0 '-' 5 
     let resContainAt = containAtPosition1 input 0 '*' 5 
+    let resultList = getFilterContainNotAt resNotContainAt (getFilterNotContain resNotContain (getFilterContainAt resContainAt list))
     when (input == "0") $ resultZero input resContainAt resNotContain resNotContainAt list
-    printRequirement input resContainAt resNotContain resNotContainAt
-    restartHelper resContainAt resNotContain resNotContainAt
+    printRequirement input resContainAt resNotContain resNotContainAt resultList
+    restartHelper resContainAt resNotContain resNotContainAt resultList
 
 
-restartHelper resContainAt resNotContain resNotContainAt = do
-    content <- readFile "sgb-words.txt"
-    let list = lines content
+restartHelper resContainAt resNotContain resNotContainAt resultList = do
     let l = "not q"
     unless (l == "q") $ do
         input <- prompt "Enter a word and hints (0 to show remaining words): " 
         let newResContainAt = containAtPosition input 0 '*' 5 resContainAt 
         let newResNotContainAt = containAtPosition input 0 '+' 5 resNotContainAt
         let newResNotContain = containAtPosition input 0 '-' 5 resNotContain 
+        let newResultList = getFilterContainNotAt newResNotContainAt (getFilterNotContain newResNotContain (getFilterContainAt newResContainAt resultList))
+        
+        putStrLn "still okay"
         if input == "0"
-            then resultZero input resContainAt resNotContain resNotContainAt list
-            else printRequirement input resContainAt resNotContain resNotContainAt
-        restartHelper newResContainAt newResNotContain newResNotContainAt -- recursive step here
+            then resultZero input newResContainAt newResNotContain newResNotContainAt newResultList
+            else printRequirement input newResContainAt newResNotContain newResNotContainAt newResultList
+        putStrLn "comeback okay" 
+        let newResultList = getFilterContainNotAt newResNotContainAt (getFilterNotContain newResNotContain (getFilterContainAt newResContainAt resultList))
+        restartHelper newResContainAt newResNotContain newResNotContainAt newResultList-- recursive step here
 
 
-resultZero input resContainAt resNotContain resNotContainAt list = do
-    let resultList = getFilterContainNotAt resNotContainAt (getFilterNotContain resNotContain (getFilterContainAt resContainAt list))
-    putStrLn (show resultList)
-    putStrLn ("There are " ++ show (length resultList) ++ " words satisfy the following conditions:") 
-    printRequirement input resContainAt resNotContain resNotContainAt
+resultZero input resContainAt resNotContain resNotContainAt resultList = do
+    putStrLn "before" 
+    putStrLn $show $ length resultList 
+    putStrLn $ show resultList
+    putStrLn "after"
+    printRequirement input resContainAt resNotContain resNotContainAt resultList
     
 -- filter res list 
 -- [('a', 0), ('b', 1)]
@@ -70,10 +75,11 @@ filterContainNotAt (wordIndex, index) (x : xs)
     | x!!index /= wordIndex && myElem wordIndex x = x : filterContainNotAt (wordIndex, index) xs
     | otherwise = filterContainNotAt (wordIndex, index) xs 
 
-printRequirement input resContainAt resNotContain resNotContainAt = do
+printRequirement input resContainAt resNotContain resNotContainAt resultList= do
+    putStrLn ("There are " ++ show (length resultList) ++ " words satisfy the following conditions:") --
+    putStrLn $ show resultList
     putStr " - Do not Contain "
     -- 1. Do not contain eodt
-    
     putStrLn (printDoNotContain resNotContain)
     -- 2. Contain 'i' but not at positions [2]
     putStr (printDoNotContainAtPosition resNotContainAt)
