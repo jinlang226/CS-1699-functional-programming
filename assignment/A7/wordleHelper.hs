@@ -28,21 +28,14 @@ restartHelper resContainAt resNotContain resNotContainAt resultList = do
         let newResNotContainAt = containAtPosition input 0 '+' 5 resNotContainAt
         let newResNotContain = containAtPosition input 0 '-' 5 resNotContain 
         let newResultList = getFilterContainNotAt newResNotContainAt (getFilterNotContain newResNotContain (getFilterContainAt newResContainAt resultList))
-        
-        putStrLn "still okay"
         if input == "0"
-            then resultZero input newResContainAt newResNotContain newResNotContainAt newResultList
+            then resultZero input resContainAt resNotContain resNotContainAt resultList
             else printRequirement input newResContainAt newResNotContain newResNotContainAt newResultList
-        putStrLn "comeback okay" 
-        let newResultList = getFilterContainNotAt newResNotContainAt (getFilterNotContain newResNotContain (getFilterContainAt newResContainAt resultList))
         restartHelper newResContainAt newResNotContain newResNotContainAt newResultList-- recursive step here
 
 
 resultZero input resContainAt resNotContain resNotContainAt resultList = do
-    putStrLn "before" 
-    putStrLn $show $ length resultList 
     putStrLn $ show resultList
-    putStrLn "after"
     printRequirement input resContainAt resNotContain resNotContainAt resultList
     
 -- filter res list 
@@ -56,7 +49,6 @@ getFilterNotContain (x : xs) list = filterNotContain x (getFilterNotContain xs l
 getFilterContainNotAt :: Eq a => [(a, Int)] -> [[a]] -> [[a]]
 getFilterContainNotAt [] list = list
 getFilterContainNotAt (x : xs) list = filterContainNotAt x (getFilterContainNotAt xs list) 
-
 
 -- do not contain xxx
 filterNotContain _ [] = []
@@ -77,7 +69,6 @@ filterContainNotAt (wordIndex, index) (x : xs)
 
 printRequirement input resContainAt resNotContain resNotContainAt resultList= do
     putStrLn ("There are " ++ show (length resultList) ++ " words satisfy the following conditions:") --
-    putStrLn $ show resultList
     putStr " - Do not Contain "
     -- 1. Do not contain eodt
     putStrLn (printDoNotContain resNotContain)
@@ -112,6 +103,7 @@ containAtPosition1 input index operation len
 -- containAtPosition "aeiou*****" 0 '*' 5 [('a', 0), ('e', 1)]    
 containAtPosition :: [Char] -> Int -> Char -> Int -> [(Char, Int)] -> [(Char, Int)]
 containAtPosition input index operation len x 
+    | input == "0" = x
     | index < len && hintIndex /= operation = containAtPosition input (index + 1)  operation len x 
     | index < len && hintIndex == operation && not (myElem (wordIndex, index) x)= (wordIndex, index) : containAtPosition input (index + 1) operation len x 
     | index < len && hintIndex == operation && myElem (wordIndex, index) x= containAtPosition input (index + 1) operation len x 
