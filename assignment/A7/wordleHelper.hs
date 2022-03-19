@@ -11,9 +11,10 @@ main = do
     let list = lines content
     putStrLn ("There are "++ show 5757 ++ " words satisfy the following conditions: ")
     input <- prompt "Enter a word and hints (0 to show remaining words): "
-    let resNotContainAt = containAtPosition1 input 0 '+' 5
-    let resNotContain = containAtPosition1 input 0 '-' 5 
-    let resContainAt = containAtPosition1 input 0 '*' 5 
+    let resNotContainAt = containAtPosition input 0 '+' 5 []
+    let resContainAt = containAtPosition input 0 '*' 5 []
+    let resNotContain' = containAtPosition input 0 '-' 5 []
+    let resNotContain = [(char, 0) | (char, _) <- resNotContain', char `notElem` [fst req | req <- resNotContainAt ++ resContainAt]]
     let resultList = getFilterContainNotAt resNotContainAt (getFilterNotContain resNotContain (getFilterContainAt resContainAt list))
     when (input == "0") $ resultZero input resContainAt resNotContain resNotContainAt list
     printRequirement input resContainAt resNotContain resNotContainAt resultList
@@ -26,7 +27,8 @@ restartHelper resContainAt resNotContain resNotContainAt resultList = do
         input <- prompt "Enter a word and hints (0 to show remaining words): " 
         let newResContainAt = containAtPosition input 0 '*' 5 resContainAt 
         let newResNotContainAt = containAtPosition input 0 '+' 5 resNotContainAt
-        let newResNotContain = containAtPosition input 0 '-' 5 resNotContain 
+        let newResNotContain' = containAtPosition input 0 '-' 5 resNotContain 
+        let newResNotContain = [(char, 0) | (char, _) <- newResNotContain', char `notElem` [fst req | req <- newResNotContainAt ++ newResContainAt]]
         let newResultList = getFilterContainNotAt newResNotContainAt (getFilterNotContain newResNotContain (getFilterContainAt newResContainAt resultList))
         if input == "0"
             then resultZero input resContainAt resNotContain resNotContainAt resultList
@@ -40,15 +42,19 @@ resultZero input resContainAt resNotContain resNotContainAt resultList = do
     
 -- filter res list 
 -- [('a', 0), ('b', 1)]
-getFilterContainAt [] list = list
-getFilterContainAt (x : xs) list = filterContainAt x (getFilterContainAt xs list) 
 
-getFilterNotContain [] list = list
-getFilterNotContain (x : xs) list = filterNotContain x (getFilterNotContain xs list) 
+-- 只用 list comprehension
+-- getFilterContainAt reqs words = [word | word <- words, all (==True) [word!!idx == char | (char, idx) <- reqs]]
 
-getFilterContainNotAt :: Eq a => [(a, Int)] -> [[a]] -> [[a]]
-getFilterContainNotAt [] list = list
-getFilterContainNotAt (x : xs) list = filterContainNotAt x (getFilterContainNotAt xs list) 
+-- 用 filter 简化一下，但可能反而没那么直观了
+getFilterContainAt reqs words = filter check words
+    where check word = all (==True) [word!!idx == char | (char, idx) <- reqs]
+
+getFilterNotContain reqs words = filter check words
+    where check word = all (==True) [not $ char `myElem` word | (char, _) <- reqs]
+
+getFilterContainNotAt reqs words = filter check words
+    where check word = all (==True) [word!!idx /= char && char `myElem` word | (char, idx) <- reqs]
 
 -- do not contain xxx
 filterNotContain _ [] = []
