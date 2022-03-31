@@ -36,7 +36,7 @@ calc input = do
     let postfix = infixToPostfix input 
     putStrLn postfix
     let result = evaluate postfix 
-    putStrLn (input ++ (show result)) 
+    putStrLn (input ++ " = " ++ (show result)) 
 
 operatorMapStr :: [String]
 operatorMapStr = ["+", "-", "*", "/"] 

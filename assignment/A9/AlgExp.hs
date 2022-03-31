@@ -71,10 +71,6 @@ infixToPostfix' (x:xs) stack res
           r = res ++ takeWhileMy openP stack
           s1 = x : dropWhileMy2 x stack
           r1 = res ++ takeWhileMy2 x stack
-        --   cond o2 = o2 `elem` operatorMapStr && compareOperator x < compareOperator o2
-        --   spl = span cond stack
-        --   s1 = x : snd spl
-        --   r1 = res ++ fst spl ++ [" "]
 
 dropWhileMy2 _ [] = []
 dropWhileMy2 y (x:xs)
@@ -127,4 +123,4 @@ evaluate xs = head (foldl calculation [] (words xs))
           calculation (x:y:xs) "-" = (x-y):xs
           calculation (x:y:xs) "*" = (x*y):xs
           calculation (x:y:xs) "/" = (x `div` y):xs
-          calculation xs y = read y:xs
+          calculation xs y = (read y) :xs
