@@ -52,9 +52,12 @@ closeP = [ ")", "]", "}"]
 -- infixToPostfix "(12 + 5) * 3" should return the string "12 5 + 3 *"
 -- infixToPostfix "(12 + 5) * 3" should return the string "12 5 + 3 *"
 infixToPostfix :: [Char] -> [Char]
-infixToPostfix input = concat $ reverse $ infixToPostfix' (parse input) [] []
+infixToPostfix input = concat $ infixToPostfix' (parse input) [] []
 
--- input, stack(stack is reversed in order), res 
+
+-- infixToPostfix "12 + 5 * 3" should return the string "12 5 3 * +"
+-- infixToPostfix "(12 + 5) * 3" should return the string "12 5 + 3 *"
+--                  input,     stack,        res                 (stack is reversed in order)
 infixToPostfix' :: [String] -> [String] -> [String] -> [String]
 infixToPostfix' [] [] res = res
 infixToPostfix' [] stack res = infixToPostfix' [] (tail stack) (res ++ [head stack] ++ [" "])
