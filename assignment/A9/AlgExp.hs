@@ -66,11 +66,11 @@ infixToPostfix' (x:xs) stack res
     -- until the stack is empty or its top entry has a lower precedence than the new operator. 
     -- Then push the new operator onto the stack.
     | x `elem` operatorMapStr = infixToPostfix' xs s1 r1 
-    | otherwise = infixToPostfix' xs stack res ++ [x] ++ [" "]
-    where s = tail $ dropWhileMy openP stack
-          r = res ++ takeWhileMy openP stack 
-          s1 = dropWhileMy2 x stack
-          r1 = res ++ takeWhileMy2 x stack ++ [" "]
+    | otherwise = infixToPostfix' xs stack (res ++ [x] ++ [" "])
+    where s = dropWhileMy openP stack
+          r = res ++ takeWhileMy openP stack
+          s1 = x : dropWhileMy2 x stack
+          r1 = res ++ takeWhileMy2 x stack
         --   cond o2 = o2 `elem` operatorMapStr && compareOperator x < compareOperator o2
         --   spl = span cond stack
         --   s1 = x : snd spl
@@ -78,23 +78,23 @@ infixToPostfix' (x:xs) stack res
 
 dropWhileMy2 _ [] = []
 dropWhileMy2 y (x:xs)
-    | compareOperator y > compareOperator x = x: (dropWhileMy2 x xs)
-    | otherwise = y:xs 
+    | compareOperator y <= compareOperator x = dropWhileMy2 y xs
+    | otherwise = x:xs
 
 takeWhileMy2 _ [] = []
 takeWhileMy2 y (x:xs) 
-    | compareOperator y <= compareOperator x = [] 
-    | otherwise  =  y: takeWhileMy2 x xs
+    | compareOperator y <= compareOperator x =  [x]  ++ [" "] ++ takeWhileMy2 y xs
+    | otherwise = []
 
 dropWhileMy _ [] = []
 dropWhileMy p (x:xs)
-    | x `elem` p =  dropWhileMy p xs
-    | otherwise  =  xs
+    | x `elem` p = xs
+    | otherwise = dropWhileMy p xs
 
 takeWhileMy _ [] = []
 takeWhileMy p (x:xs) 
     | x `elem` p =  [] 
-    | otherwise  =  x: takeWhileMy p xs
+    | otherwise  =  [x] ++ [" "] ++ takeWhileMy p xs
 
 compareOperator x
     | x == "-" = 2
@@ -105,9 +105,9 @@ compareOperator x
 
 parse :: String -> [String]
 parse [] = []
-parse (x:xs)  
-    | x `elem` notNumMap = [x] : parse xs
+parse (x:xs)
     | x == ' ' = parse xs
+    | x `elem` notNumMap = [x] : parse xs
     | otherwise = fst parsedNumber : parse (snd parsedNumber)
     where parsedNumber = parseNumber (x:xs)
 
@@ -115,8 +115,8 @@ parse (x:xs)
 parseNumber :: String -> (String, String)
 parseNumber[] = ([],[])
 parseNumber (x:xs)
-    | x /= ' ' && x `elem` numMap = (x : fst parsed, snd parsed)
-    | otherwise = ([], xs)
+    | x `elem` numMap = (x : fst parsed, snd parsed)
+    | otherwise = ([], x:xs)
     where parsed = parseNumber xs
 
 
@@ -128,4 +128,3 @@ evaluate xs = head (foldl calculation [] (words xs))
           calculation (x:y:xs) "*" = (x*y):xs
           calculation (x:y:xs) "/" = (x `div` y):xs
           calculation xs y = read y:xs
-
