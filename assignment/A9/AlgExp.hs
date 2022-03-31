@@ -48,7 +48,6 @@ closeP :: [String]
 closeP = [ ")", "]", "}"]
 
 -- Turn the infix form of an algebraic expression into the postfix form if the expression is valid and balanced. For example:
--- c "12 + 5 * 3" should return the string "12 5 3 * +"
 -- infixToPostfix "(12 + 5) * 3" should return the string "12 5 + 3 *"
 -- infixToPostfix "12 + 5 * 3" should return the string "12 5 3 * +"
 infixToPostfix :: [Char] -> [Char]
