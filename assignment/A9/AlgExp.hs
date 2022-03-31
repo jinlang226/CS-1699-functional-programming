@@ -120,7 +120,7 @@ parseNumber (x:xs)
 evaluate :: (Integral a, Read a) => [Char] -> a
 evaluate xs = head (foldl calculation [] (words xs)) 
     where calculation (x:y:xs) "+" = (x+y):xs
-          calculation (x:y:xs) "-" = (x-y):xs
+          calculation (x:y:xs) "-" = (y-x):xs
           calculation (x:y:xs) "*" = (x*y):xs
-          calculation (x:y:xs) "/" = (x `div` y):xs
+          calculation (x:y:xs) "/" = (y `div` x):xs
           calculation xs y = (read y) :xs

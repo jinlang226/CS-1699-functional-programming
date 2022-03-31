@@ -34,7 +34,7 @@ calc input = do
     when (operatorNum + 1 > operandNum) $ error "Invalid Expression: Too many operator(s)"
     when (operatorNum + 1 < operandNum) $ error "Invalid Expression: Too many operand(s)"  
     let postfix = infixToPostfix input 
-    putStrLn postfix
+    -- putStrLn postfix
     let result = evaluate postfix 
     putStrLn (input ++ " = " ++ (show result)) 
 
