@@ -1,5 +1,5 @@
 module AlgExp
-(isValid, isBalanced, infixToPostfix) where  --, evaluate 
+(isValid, isBalanced, infixToPostfix, evaluate, parse) where  
 
 -- ghc --make AlgExp.hs
 
@@ -30,9 +30,7 @@ isBalanced' ('[':xs) ys = isBalanced' xs (']':ys)
 isBalanced' ('{':xs) ys = isBalanced' xs ('}':ys)
 
 isBalanced' _  [] = error "The expression is not balanced." 
-
 isBalanced' (x:xs) (y:ys) = (x == y) && (isBalanced' xs ys)
-
 
 
 validChar = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '*', '/', '(', ')', '[', ']', '{', '}', ' ']
@@ -106,7 +104,6 @@ compareOperator x
     | x == "*" = 3
     |otherwise = 1
 
-
 parse :: String -> [String]
 parse [] = []
 parse (x:xs)  
@@ -124,13 +121,12 @@ parseNumber (x:xs)
     where parsed = parseNumber xs
 
 
-
 -- If the given string is a valid and balanced algebraic expression, the evaluate function will return the result. For simplicity, you should use the div function for division. Note that the Integral type class is a type constraint because we use the div function. Similarly, we have to use the read function to turn a string representation of an integer into an integer.
 evaluate :: (Integral a, Read a) => [Char] -> a
--- https://github.com/chinmay-ratnaparkhi/Haskell-Postfix-Calculator/blob/master/postfixCalc.hs
--- calc :: (Num a, Read a) => String -> a
-evaluate xs = head (foldl stacker [] (words xs)) 
-    where stacker (x:y:xs) "+" = (x+y):xs
-	      stacker (x:y:xs) "-" = (x-y):xs
-	      stacker (x:y:xs) "*" = (x*y):xs
-	      stacker xs y = (read y):xs
+evaluate xs = head (foldl calculation [] (words xs)) 
+    where calculation (x:y:xs) "+" = (x+y):xs
+          calculation (x:y:xs) "-" = (x-y):xs
+          calculation (x:y:xs) "*" = (x*y):xs
+          calculation (x:y:xs) "/" = (x `div` y):xs
+          calculation xs y = read y:xs
+

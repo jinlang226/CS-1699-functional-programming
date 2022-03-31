@@ -26,10 +26,34 @@ start input = do
 
 calc input = do
     let valid = isValid input
+    when (not valid) $ putStrLn "not valid"
     let balanced = isBalanced (filterInput input)
-    let intfixToPostfix = infixToPostfix input 
-    putStrLn input
+    when (not balanced) $ putStrLn "not valid"
+    let operatorNum = fst $ isFormal (parse input) 0 0
+    let operandNum = snd $ isFormal (parse input) 0 0
+    when (operatorNum + 1 > operandNum) $ error "Invalid Expression: Too many operator(s)"
+    when (operatorNum + 1 < operandNum) $ error "Invalid Expression: Too many operand(s)"  
+    let postfix = infixToPostfix input 
+    putStrLn postfix
+    let result = evaluate postfix 
+    putStrLn (input ++ (show result)) 
 
+operatorMapStr :: [String]
+operatorMapStr = ["+", "-", "*", "/"] 
+
+isFormal :: [String] -> Int -> Int -> (Int, Int)
+isFormal [] operator operand = (operator, operand)
+isFormal (x:xs) operator operand
+    | x `elem` operatorMapStr = isFormal xs (operator+1) operand
+    | isNumber x = isFormal xs operator (operand+1) 
+    | otherwise = isFormal xs operator operand 
+
+
+isNumber :: String -> Bool
+isNumber = all isDigit
+
+isDigit :: Char -> Bool
+isDigit c =  (fromIntegral (fromEnum c - fromEnum '0') :: Word) <= 9
 
 filterInput :: String -> [Char]
 filterInput [] = []
